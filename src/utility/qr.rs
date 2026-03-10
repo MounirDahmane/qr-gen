@@ -2,6 +2,10 @@ use super::types::SaveFormat;
 use eframe::egui::Color32;
 use qrcode::QrCode;
 
+/// Renders the QR code into an RGBA image at the given resolution.
+/// `export_size` is the target pixel dimension (width = height).
+/// The actual size may be slightly smaller due to integer division:
+/// `actual_size = (export_size / qr_width) * qr_width`.
 pub fn render_qr_image(
     code: &QrCode,
     export_size: u32,
@@ -10,6 +14,7 @@ pub fn render_qr_image(
 ) -> image::RgbaImage {
     let matrix = code.to_colors();
     let qr_width = code.width();
+    // Integer division — each module gets an equal number of pixels.
     let cell_size = export_size / qr_width as u32;
     let actual_size = cell_size * qr_width as u32;
     let mut img = image::RgbaImage::new(actual_size, actual_size);
@@ -22,6 +27,7 @@ pub fn render_qr_image(
         } else {
             image::Rgba([bg_color.r(), bg_color.g(), bg_color.b(), bg_color.a()])
         };
+        // Fill every pixel in the cell — one module = cell_size × cell_size pixels.
         for dy in 0..cell_size {
             for dx in 0..cell_size {
                 img.put_pixel(col * cell_size + dx, row * cell_size + dy, fill);
@@ -31,6 +37,8 @@ pub fn render_qr_image(
     img
 }
 
+/// Opens a native save dialog and writes the QR code to disk.
+/// If the user cancels the dialog, nothing happens.
 pub fn save_img(
     code: &QrCode,
     fmt: &SaveFormat,

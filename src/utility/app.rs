@@ -7,18 +7,31 @@ use super::history::{HistoryEntry, load_history, save_history};
 use super::qr::{render_qr_image, save_img};
 use super::types::{ModuleShape, SaveFormat};
 
+/// Central application state. Holds all user settings, QR code state,
+/// history, and UI flags. Persisted partially via `save()` on app close.
 pub struct MyApp {
+    /// Current text or URL to encode into the QR code.
     pub text: String,
+    /// The generated QR code, regenerated every frame from `text` and `ec_level`.
     pub code: QrCode,
+    /// Error correction level — controls how much damage the QR can sustain and still scan.
     pub ec_level: qrcode::EcLevel,
+    /// Scale factor (0.3–1.0) controlling how much of the central panel the QR fills.
     pub qr_scale: f32,
+    /// Selected export format: PNG or SVG.
     pub fmt: SaveFormat,
+    /// Visual style of QR modules: square corners or rounded.
     pub module_shape: ModuleShape,
     pub dark_mode: bool,
+    /// History entries loaded from disk on startup and saved on close.
     pub history: Vec<HistoryEntry>,
+    /// Foreground color — applied to dark QR modules.
     pub fg_color: Color32,
+    /// Background color — applied to light QR modules.
     pub bg_color: Color32,
+    /// PNG export resolution in pixels (width = height, e.g. 512 → 512×512).
     pub export_size: u32,
+    /// Tracks whether PNG is selected (true) or SVG (false), to show the resolution picker.
     pub select: bool,
     pub clipboard: Clipboard,
 }
@@ -51,6 +64,7 @@ impl eframe::App for MyApp {
             ctx.set_visuals(egui::Visuals::light());
         }
 
+        // Ctrl+S triggers the save dialog without needing to click the button.
         ctx.input(|i| {
             if i.key_pressed(egui::Key::S) && i.modifiers.ctrl {
                 save_img(
@@ -121,12 +135,15 @@ impl eframe::App for MyApp {
                     );
                 }
 
+                // Deferred actions — we can't mutate self.history while iterating it,
+                // so we collect the intended action and apply it after the loop.
                 let mut restore: Option<HistoryEntry> = None;
                 let mut delete: Option<usize> = None;
 
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     for (i, entry) in self.history.iter().enumerate() {
                         ui.horizontal(|ui| {
+                            // Truncate long labels to prevent sidebar overflow.
                             let label = if entry.text.len() > 16 {
                                 format!("{}…", &entry.text[..16])
                             } else {
@@ -259,6 +276,7 @@ impl eframe::App for MyApp {
                             {
                                 self.select = true;
                             }
+                            // Resolution picker is only relevant for PNG exports.
                             if self.select {
                                 ui.label(egui::RichText::new("PNG Resolution").strong());
                                 egui::ComboBox::from_id_salt("PNG Resolution")
@@ -274,7 +292,8 @@ impl eframe::App for MyApp {
                     });
                     ui.add_space(6.0);
 
-                    // styled button helper closure
+                    // Reusable button style — applied inside ui.scope() to avoid
+                    // bleeding styles into surrounding widgets.
                     let style_btn = |ui: &mut egui::Ui, dark: bool| {
                         ui.visuals_mut().widgets.inactive.bg_fill = Color32::from_rgb(50, 50, 80);
                         ui.visuals_mut().widgets.hovered.bg_fill = Color32::from_rgb(137, 180, 250);
@@ -315,6 +334,7 @@ impl eframe::App for MyApp {
                                 self.fg_color,
                                 self.bg_color,
                             );
+                            // arboard expects raw RGBA bytes — RgbaImage::as_raw() provides exactly that.
                             let cpy_img = ImageData {
                                 width: img.width() as usize,
                                 height: img.height() as usize,
@@ -351,9 +371,12 @@ impl eframe::App for MyApp {
                 Color32::from_rgb(245, 245, 255)
             }))
             .show(ctx, |ui| {
+                // Regenerate the QR every frame — cheap enough and keeps preview in sync.
                 self.code = QrCode::with_error_correction_level(&self.text, self.ec_level).unwrap();
                 let matrix = self.code.to_colors();
 
+                // Scale the QR to fit the panel while respecting qr_scale,
+                // then center it by offsetting by half the remaining space.
                 let panel_size = ui.available_size().x.min(ui.available_size().y) * self.qr_scale;
                 let cell_size = panel_size / self.code.width() as f32;
                 let qr_pixel_size = cell_size * self.code.width() as f32;
@@ -373,6 +396,7 @@ impl eframe::App for MyApp {
                     } else {
                         self.bg_color
                     };
+                    // Rounding of 0.0 = sharp squares; 0.45 * cell_size ≈ near-circular dots.
                     let rounding = match self.module_shape {
                         ModuleShape::SQUARE => 0.0,
                         ModuleShape::ROUNDED => cell_size * 0.45,
@@ -382,6 +406,7 @@ impl eframe::App for MyApp {
             });
     }
 
+    /// Called by eframe on app close — persists history to disk.
     fn save(&mut self, _storage: &mut dyn eframe::Storage) {
         save_history(&self.history);
     }

@@ -6,6 +6,7 @@ use utility::app::MyApp;
 fn main() -> eframe::Result {
     let options = NativeOptions {
         viewport: egui::ViewportBuilder::default()
+            // Prevent the window from becoming too small to use.
             .with_min_inner_size([600.0, 400.0])
             .with_max_inner_size([1200.0, 900.0])
             .with_inner_size([800.0, 600.0]),

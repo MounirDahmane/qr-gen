@@ -44,7 +44,7 @@ A fast, native QR-code generator written in **Rust** with **egui**. Generate, cu
 ### Build from source
 
 ```bash
-git clone https://github.com/MounirDahmane/QrGen.git
+git clone https://github.com/MounirDahmane/qr-gen
 cd QrGen
 cargo build --release
 # binary: target/release/qrgen
