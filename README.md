@@ -7,15 +7,20 @@ A fast, native QR-code generator written in **Rust** with **egui**. Generate, cu
 ## Screenshots
 
 > **Light mode — Error-correction selector**
-> ![Light mode](docs/light_mode.png)
-> **Dark mode — Rounded modules with custom colors**
-> ![Dark mode rounded](docs/dark_rounded.png)
-> **Dark mode — Custom color QR code**
-> ![Custom colors](docs/custom_colors.png)
+ <img width="600" height="755" alt="Screenshot from 2026-03-10 15-10-50" src="https://github.com/user-attachments/assets/c2d5c05b-d5ce-4a82-a1a6-3bfe982bcd40" />
 
+<br><br>
+
+> **Dark mode — Rounded modules with custom colors**
+<img width="600" height="755" alt="Screenshot from 2026-03-10 15-11-53" src="https://github.com/user-attachments/assets/6b53d5b5-bf4b-4c34-b01a-dada19c5590c" />
+
+<br><br>
+
+> **Dark mode — Custom color QR code**
+<img width="600" height="755" alt="Screenshot from 2026-03-10 15-13-00" src="https://github.com/user-attachments/assets/7dded1fd-c356-4a0c-801d-231064318f7a" />
 ---
 
-## Highlights
+### Highlights
 
 * Live preview that updates as you type
 * Square or rounded module shapes
@@ -47,7 +52,7 @@ cargo build --release
 
 ### Run in dev
 
-```bash
+```text
 cargo run --release
 ```
 
@@ -78,7 +83,7 @@ src/
     └── types.rs           # shared enums (SaveFormat, ModuleShape, ...)
 ```
 
-## Dependencies (high level)
+### Dependencies (high level)
 
 * `eframe` / `egui` — UI framework
 * `qrcode` — QR-generation algorithm
